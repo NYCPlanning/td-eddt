@@ -20,7 +20,7 @@ nycbk20=nycbk20.loc[nycbk20['county'].isin(['36005','36047','36061','36081','360
 nycbk20=nycbk20.to_crs(4326)
 nycbk20.to_file(path+'nycbk20.geojson',driver='GeoJSON')
 
-# Create 2020 Block pOINT
+# Create 2020 Block Point
 nycbkpt20=gpd.read_file(path+'tl_2021_36_tabblock20/tl_2021_36_tabblock20.shp')
 nycbkpt20.crs=4269
 nycbkpt20['blockid']=nycbkpt20['GEOID20'].copy()
