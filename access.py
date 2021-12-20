@@ -2,17 +2,12 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import requests
-import json
 import shapely
 from shapely import wkt
-import plotly.graph_objects as go
-import plotly.express as px
-import plotly.io as pio
 
 
 pd.set_option('display.max_columns', None)
 path='C:/Users/mayij/Desktop/DOC/DCP2021/EDDT/'
-pio.renderers.default='browser'
 doserver='http://159.65.64.166:8801/'
 
 
@@ -110,22 +105,19 @@ nycbk20.crs=4326
 nycbkpt20=gpd.read_file(path+'nycbkpt20.geojson')
 nycbkpt20.crs=4326
 pop=pd.read_csv(path+'pop20.csv',dtype={'blockid':str,'pop20':float})
-subwaybk=gpd.sjoin(nycbk20,subwayadaotp,how='inner',op='intersects')
-subwaybk['subwayada']=1
-subwaybk=subwaybk[['blockid','subwayada']].drop_duplicates(keep='first').reset_index(drop=True)
-subwaybk=pd.merge(nycbkpt20,subwaybk,how='left',on='blockid')
-subwaybk['subwayada']=np.where(pd.isna(subwaybk['subwayada']),0,subwaybk['subwayada'])
-subwaybk=pd.merge(subwaybk,pop,how='left',on='blockid')
-subwaybk=subwaybk.groupby(['puma','subwayada'],as_index=False).agg({'pop20':'sum'}).reset_index(drop=True)
-subwaybk=subwaybk.pivot(index='puma',columns='subwayada',values='pop20').reset_index(drop=False)
-subwaybk.columns=['puma','nonada','ada']
-subwaybk=subwaybk.fillna(0)
-subwaybk['total']=subwaybk['nonada']+subwaybk['ada']
-subwaybk['pct']=subwaybk['ada']/subwaybk['total']
-subwaybk.to_csv(path+'pumasubwayada.csv',index=False)
-
-
-
+pumasubwayada=gpd.sjoin(nycbk20,subwayadaotp,how='inner',op='intersects')
+pumasubwayada['subwayada']=1
+pumasubwayada=pumasubwayada[['blockid','subwayada']].drop_duplicates(keep='first').reset_index(drop=True)
+pumasubwayada=pd.merge(nycbkpt20,pumasubwayada,how='left',on='blockid')
+pumasubwayada['subwayada']=np.where(pd.isna(pumasubwayada['subwayada']),0,pumasubwayada['subwayada'])
+pumasubwayada=pd.merge(pumasubwayada,pop,how='left',on='blockid')
+pumasubwayada=pumasubwayada.groupby(['puma','subwayada'],as_index=False).agg({'pop20':'sum'}).reset_index(drop=True)
+pumasubwayada=pumasubwayada.pivot(index='puma',columns='subwayada',values='pop20').reset_index(drop=False)
+pumasubwayada.columns=['puma','nonada','ada']
+pumasubwayada=pumasubwayada.fillna(0)
+pumasubwayada['total']=pumasubwayada['nonada']+pumasubwayada['ada']
+pumasubwayada['pct']=pumasubwayada['ada']/pumasubwayada['total']
+pumasubwayada.to_csv(path+'pumasubwayada.csv',index=False)
 
 
 # Access to Subway Stations and SBS Stops
@@ -193,29 +185,35 @@ for i in subwaysbs.index:
         subwaysbs.loc[i,'qtml']=iso.loc[0,'geometry'].wkt
     except:
         subwaysbs.loc[i,'qtml']=''
-        print(str(subwaysbs.loc[i,'Station_ID'])+' no geometry!')
+        print(str(i)+' no geometry!')
 subwaysbs=subwaysbs[subwaysbs['qtml']!=''].reset_index(drop=True)
-subwayada=gpd.GeoDataFrame(subwayada,geometry=subwayada['qtml'].map(wkt.loads),crs=4326)
-subwayada=subwayada.drop('qtml',axis=1)
-subwayada.to_file(path+'subwayadaotp.geojson',driver='GeoJSON')
+subwaysbs=gpd.GeoDataFrame(subwaysbs,geometry=subwaysbs['qtml'].map(wkt.loads),crs=4326)
+subwaysbs=subwaysbs.drop('qtml',axis=1)
+subwaysbs.to_file(path+'subwaysbsotp.geojson',driver='GeoJSON')
 # Summarize by PUMA
-subwayadaotp=gpd.read_file(path+'subwayadaotp.geojson')
-subwayadaotp.crs=4326
+subwaysbsotp=gpd.read_file(path+'subwaysbsotp.geojson')
+subwaysbsotp.crs=4326
 nycbk20=gpd.read_file(path+'nycbk20.geojson')
 nycbk20.crs=4326
 nycbkpt20=gpd.read_file(path+'nycbkpt20.geojson')
 nycbkpt20.crs=4326
 pop=pd.read_csv(path+'pop20.csv',dtype={'blockid':str,'pop20':float})
-subwaybk=gpd.sjoin(nycbk20,subwayadaotp,how='inner',op='intersects')
-subwaybk['subwayada']=1
-subwaybk=subwaybk[['blockid','subwayada']].drop_duplicates(keep='first').reset_index(drop=True)
-subwaybk=pd.merge(nycbkpt20,subwaybk,how='left',on='blockid')
-subwaybk['subwayada']=np.where(pd.isna(subwaybk['subwayada']),0,subwaybk['subwayada'])
-subwaybk=pd.merge(subwaybk,pop,how='left',on='blockid')
-subwaybk=subwaybk.groupby(['puma','subwayada'],as_index=False).agg({'pop20':'sum'}).reset_index(drop=True)
-subwaybk=subwaybk.pivot(index='puma',columns='subwayada',values='pop20').reset_index(drop=False)
-subwaybk.columns=['puma','nonada','ada']
-subwaybk=subwaybk.fillna(0)
-subwaybk['total']=subwaybk['nonada']+subwaybk['ada']
-subwaybk['pct']=subwaybk['ada']/subwaybk['total']
-subwaybk.to_csv(path+'pumasubwayada.csv',index=False)
+pumasubwaysbs=gpd.sjoin(nycbk20,subwaysbsotp,how='inner',op='intersects')
+pumasubwaysbs['subwaysbs']=1
+pumasubwaysbs=pumasubwaysbs[['blockid','subwaysbs']].drop_duplicates(keep='first').reset_index(drop=True)
+pumasubwaysbs=pd.merge(nycbkpt20,pumasubwaysbs,how='left',on='blockid')
+pumasubwaysbs['subwaysbs']=np.where(pd.isna(pumasubwaysbs['subwaysbs']),0,pumasubwaysbs['subwaysbs'])
+pumasubwaysbs=pd.merge(pumasubwaysbs,pop,how='left',on='blockid')
+pumasubwaysbs=pumasubwaysbs.groupby(['puma','subwaysbs'],as_index=False).agg({'pop20':'sum'}).reset_index(drop=True)
+pumasubwaysbs=pumasubwaysbs.pivot(index='puma',columns='subwaysbs',values='pop20').reset_index(drop=False)
+pumasubwaysbs.columns=['puma','nonsubwaysbs','subwaysbs']
+pumasubwaysbs=pumasubwaysbs.fillna(0)
+pumasubwaysbs['total']=pumasubwaysbs['nonsubwaysbs']+pumasubwaysbs['subwaysbs']
+pumasubwaysbs['pct']=pumasubwaysbs['subwaysbs']/pumasubwaysbs['total']
+pumasubwaysbs.to_csv(path+'pumasubwaysbs.csv',index=False)
+
+
+
+
+
+
