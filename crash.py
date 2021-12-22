@@ -9,7 +9,30 @@ from shapely import wkt
 pd.set_option('display.max_columns', None)
 path='C:/Users/mayij/Desktop/DOC/DCP2021/EDDT/'
 
+# Simplify LION
+lion=gpd.read_file('C:/Users/mayij/Desktop/DOC/DCP2020/COVID19/STREET CLOSURE/sidewalk/input/lion/lion.shp')
+lion.crs=4326
+lionsp=lion[['SegmentID','PhysicalID','RB_Layer','FeatureTyp','SegmentTyp','NonPed','RW_TYPE','TrafDir','geometry']].reset_index(drop=True)
+lionsp['segmentid']=pd.to_numeric(lionsp['SegmentID'])
+lionsp=lionsp[pd.notna(lionsp['segmentid'])].reset_index(drop=True)
+lionsp['physicalid']=pd.to_numeric(lionsp['PhysicalID'])
+lionsp=lionsp[pd.notna(lionsp['physicalid'])].reset_index(drop=True)
+lionsp['rblayer']=[' '.join(x.split()).upper() if pd.notna(x) else '' for x in lionsp['RB_Layer']]
+lionsp=lionsp[np.isin(lionsp['rblayer'],['B','R'])].reset_index(drop=True)
+lionsp['featuretype']=[' '.join(x.split()).upper() if pd.notna(x) else '' for x in lionsp['FeatureTyp']]
+lionsp=lionsp[np.isin(lionsp['featuretype'],['0','6','C'])].reset_index(drop=True)
+lionsp['segmenttype']=[' '.join(x.split()).upper() if pd.notna(x) else '' for x in lionsp['SegmentTyp']]
+lionsp=lionsp[np.isin(lionsp['segmenttype'],['B','R','U','S'])].reset_index(drop=True)
+lionsp['rwtype']=pd.to_numeric(lionsp['RW_TYPE'])
+lionsp=lionsp[np.isin(lionsp['rwtype'],[1,2,3,4,9,13])].reset_index(drop=True)
+lionsp['trafficdir']=[' '.join(x.split()).upper() if pd.notna(x) else '' for x in lionsp['TrafDir']]
+lionsp=lionsp[np.isin(lionsp['trafficdir'],['T','W','A'])].reset_index(drop=True)
+lionsp=lionsp[['segmentid','physicalid','rblayer','featuretype','segmenttype','rwtype','trafficdir','geometry']].reset_index(drop=True)
+lionsp=lionsp.drop_duplicates(['segmentid'],keep='first').reset_index(drop=True)
+lionsp.to_file(path+'lionsp.geojson',driver='GeoJSON')
 
+
+# Crash Data
 df=pd.read_csv(path+'Motor_Vehicle_Collisions_-_Crashes.csv')
 df['date']=pd.to_datetime(df['CRASH DATE'],format='%m/%d/%Y',errors='coerce')
 df['year']=df['date'].dt.year
@@ -41,6 +64,13 @@ pop=pd.read_csv(path+'pop20.csv',dtype={'blockid':str,'pop20':float})
 pop=pd.merge(nycbkpt20,pop,how='left',on='blockid')
 pop=pop.groupby(['puma'],as_index=False).agg({'pop20':'sum'}).reset_index(drop=True)
 df=pd.merge(df,pop,how='left',on='puma')
+lionsp=gpd.read_file(path+'lionsp.geojson')
+lionsp.crs=4326
+lionsp=gpd.overlay(lionsp,puma,how='intersection')
+lionsp=lionsp.to_crs(6539)
+lionsp['mile']=lionsp['geometry'].length/5280
+lionsp=lionsp.groupby(['puma'],as_index=False).agg({'mile':'sum'})
+df=pd.merge(df,lionsp,how='left',on='puma')
 df.to_csv(path+'crash.csv',index=False)
 
 
@@ -54,11 +84,6 @@ df.to_csv(path+'crash.csv',index=False)
 # df['injrate']=df['totinj']/df['pop20']*100000
 # df['killrate']=df['totinj']/df['pop20']*100000
 # df.to_file(path+'crash.geojson',driver='GeoJSON')
-
-
-
-
-
 
 
 
