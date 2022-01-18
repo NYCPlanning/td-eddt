@@ -89,6 +89,33 @@ df.to_csv(path+'crash.csv',index=False)
 
 
 
+# Vision Zero View Data
+df=gpd.read_file('C:/Users/Y_Ma2/Desktop/allinjuries.geojson')
+df.crs=4326
+df['pedinj']=df['PedInj'].copy()
+df['cycinj']=df['BikeInj'].copy()
+df['motinj']=df['MVInj'].copy()
+df['totinj']=df['Injuries'].copy()
+df=df[['pedinj','cycinj','motinj','totinj','geometry']].reset_index(drop=True)
+puma=gpd.read_file('C:/Users/Y_Ma2/Desktop/puma.geojson')
+puma.crs=4326
+puma['puma']=puma[['GEOID10']].copy()
+puma=puma[['puma','geometry']].reset_index(drop=True)
+df=gpd.sjoin(df,puma,how='left',op='intersects')
+df=df.groupby(['puma'],as_index=False).agg({'pedinj':'sum','cycinj':'sum','motinj':'sum','totinj':'sum'}).reset_index(drop=True)
+df.to_csv('C:/Users/Y_Ma2/Desktop/injury.csv',index=False)
 
-
-
+df=gpd.read_file('C:/Users/Y_Ma2/Desktop/allfatalities.geojson')
+df.crs=4326
+df['pedkill']=df['PedFatal'].copy()
+df['cyckill']=df['BikeFatal'].copy()
+df['motkill']=df['MVFatal'].copy()
+df['totkill']=df['Fatalities'].copy()
+df=df[['pedkill','cyckill','motkill','totkill','geometry']].reset_index(drop=True)
+puma=gpd.read_file('C:/Users/Y_Ma2/Desktop/puma.geojson')
+puma.crs=4326
+puma['puma']=puma[['GEOID10']].copy()
+puma=puma[['puma','geometry']].reset_index(drop=True)
+df=gpd.sjoin(df,puma,how='left',op='intersects')
+df=df.groupby(['puma'],as_index=False).agg({'pedkill':'sum','cyckill':'sum','motkill':'sum','totkill':'sum'}).reset_index(drop=True)
+df.to_csv('C:/Users/Y_Ma2/Desktop/fatality.csv',index=False)
