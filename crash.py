@@ -90,32 +90,45 @@ df.to_csv(path+'crash.csv',index=False)
 
 
 # Vision Zero View Data
-df=gpd.read_file('C:/Users/Y_Ma2/Desktop/allinjuries.geojson')
-df.crs=4326
-df['pedinj']=df['PedInj'].copy()
-df['cycinj']=df['BikeInj'].copy()
-df['motinj']=df['MVInj'].copy()
-df['totinj']=df['Injuries'].copy()
-df=df[['pedinj','cycinj','motinj','totinj','geometry']].reset_index(drop=True)
-puma=gpd.read_file('C:/Users/Y_Ma2/Desktop/puma.geojson')
-puma.crs=4326
-puma['puma']=puma[['GEOID10']].copy()
-puma=puma[['puma','geometry']].reset_index(drop=True)
-df=gpd.sjoin(df,puma,how='left',op='intersects')
-df=df.groupby(['puma'],as_index=False).agg({'pedinj':'sum','cycinj':'sum','motinj':'sum','totinj':'sum'}).reset_index(drop=True)
-df.to_csv('C:/Users/Y_Ma2/Desktop/injury.csv',index=False)
+for i in range(2009,2021):
+    inj=gpd.read_file('G:/ACTIVE_DATA/Vision Zero/Crash/allInjuries_'+str(i)+'.shp')
+    inj=inj.to_crs(4326)
+    inj['totinj']=inj['Injuries'].copy()
+    inj['pedinj']=inj['PedInj'].copy()
+    inj['cycinj']=inj['BikeInj'].copy()
+    inj['motinj']=inj['MVInj'].copy()
+    inj=inj[['totinj','pedinj','cycinj','motinj','geometry']].reset_index(drop=True)
+    puma=gpd.read_file('C:/Users/Y_Ma2/Desktop/GITHUB/td-eddt/crash/puma.geojson')
+    puma.crs=4326
+    puma['puma']=puma[['GEOID10']].copy()
+    puma=puma[['puma','geometry']].reset_index(drop=True)
+    inj=gpd.sjoin(inj,puma,how='left',op='intersects')
+    inj=inj.groupby(['puma'],as_index=False).agg({'totinj':'sum','pedinj':'sum','cycinj':'sum','motinj':'sum'}).reset_index(drop=True)
+    
+    fat=gpd.read_file('G:/ACTIVE_DATA/Vision Zero/Crash/allFatalities_'+str(i)+'.shp')
+    fat=fat.to_crs(4326)
+    fat['totkill']=fat['Fatalities'].copy()
+    fat=fat[['totkill','geometry']].reset_index(drop=True)
+    puma=gpd.read_file('C:/Users/Y_Ma2/Desktop/GITHUB/td-eddt/crash/puma.geojson')
+    puma.crs=4326
+    puma['puma']=puma[['GEOID10']].copy()
+    puma=puma[['puma','geometry']].reset_index(drop=True)
+    fat=gpd.sjoin(fat,puma,how='left',op='intersects')
+    fat=fat.groupby(['puma'],as_index=False).agg({'totkill':'sum'}).reset_index(drop=True)
+    
+    df=pd.read_csv('C:/Users/Y_Ma2/Desktop/GITHUB/td-eddt/crash/crash.csv',dtype={'puma':str})
+    df=pd.merge(df,inj,how='inner',on='puma')
+    df=pd.merge(df,fat,how='inner',on='puma')
+    df['PUMA']=df['puma'].copy()
+    df['Total Injuries per 100 Street Miles']=df['totinj']/df['streetmiles']*100
+    df['Pedestrian Injuries per 100 Street Miles']=df['pedinj']/df['streetmiles']*100
+    df['Cyclist Injuries per 100 Street Miles']=df['cycinj']/df['streetmiles']*100
+    df['Motorist Injuries per 100 Street Miles']=df['motinj']/df['streetmiles']*100
+    df['Total Fatalities per 100 Street Miles']=df['totkill']/df['streetmiles']*100
+    df=df[['PUMA','Total Injuries per 100 Street Miles','Pedestrian Injuries per 100 Street Miles',
+           'Cyclist Injuries per 100 Street Miles','Motorist Injuries per 100 Street Miles',
+           'Total Fatalities per 100 Street Miles']].reset_index(drop=True)
+    df.to_csv('C:/Users/Y_Ma2/Desktop/GITHUB/td-eddt/crash/crash'+str(i)+'.csv',index=False)
+    
+    
 
-df=gpd.read_file('C:/Users/Y_Ma2/Desktop/allfatalities.geojson')
-df.crs=4326
-df['pedkill']=df['PedFatal'].copy()
-df['cyckill']=df['BikeFatal'].copy()
-df['motkill']=df['MVFatal'].copy()
-df['totkill']=df['Fatalities'].copy()
-df=df[['pedkill','cyckill','motkill','totkill','geometry']].reset_index(drop=True)
-puma=gpd.read_file('C:/Users/Y_Ma2/Desktop/puma.geojson')
-puma.crs=4326
-puma['puma']=puma[['GEOID10']].copy()
-puma=puma[['puma','geometry']].reset_index(drop=True)
-df=gpd.sjoin(df,puma,how='left',op='intersects')
-df=df.groupby(['puma'],as_index=False).agg({'pedkill':'sum','cyckill':'sum','motkill':'sum','totkill':'sum'}).reset_index(drop=True)
-df.to_csv('C:/Users/Y_Ma2/Desktop/fatality.csv',index=False)
