@@ -125,9 +125,10 @@ for i in range(2009,2021):
     df['Cyclist Injuries per 100 Street Miles']=df['cycinj']/df['streetmiles']*100
     df['Motorist Injuries per 100 Street Miles']=df['motinj']/df['streetmiles']*100
     df['Total Fatalities per 100 Street Miles']=df['totkill']/df['streetmiles']*100
+    df['Street Miles']=df['streetmiles'].copy()
     df=df[['PUMA','Total Injuries per 100 Street Miles','Pedestrian Injuries per 100 Street Miles',
            'Cyclist Injuries per 100 Street Miles','Motorist Injuries per 100 Street Miles',
-           'Total Fatalities per 100 Street Miles']].reset_index(drop=True)
+           'Total Fatalities per 100 Street Miles','Street Miles']].reset_index(drop=True)
     df.to_csv('C:/Users/Y_Ma2/Desktop/GITHUB/td-eddt/crash/crash'+str(i)+'.csv',index=False)
     
     
