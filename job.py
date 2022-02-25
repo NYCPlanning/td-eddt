@@ -40,7 +40,7 @@ df=pd.merge(df,pop,how='left',on='orgct')
 df['wacpop']=df['wac']*df['pop']
 df=df.groupby(['puma'],as_index=False).agg({'wacpop':'sum','pop':'sum'}).reset_index(drop=True)
 df['wac']=df['wacpop']/df['pop']
-df=df[['puma','wac']].reset_index(drop=True)
+df=df[['puma','wac','pop']].reset_index(drop=True)
 df.to_csv(path+'job.csv',index=False)
 
 
